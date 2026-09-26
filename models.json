@@ -1,0 +1,172 @@
+[
+  {
+    "id": "spark-x2-5-1-7b-abliterated",
+    "displayName": "Spark X2.5 1.7B Abliterated",
+    "path": "darioooooo0o\\Spark-X2.5-1.7B-Abliterated-GGUF\\Spark-X2.5-1.7B-Abliterated-Q4_K_M.gguf",
+    "mmprojPath": null,
+    "family": "Spark X2.5",
+    "architecture": "spark2_5",
+    "parametersB": 1.7,
+    "quantization": "Q4_K_M",
+    "contextLimit": 1048576,
+    "recommendedContext": 8192,
+    "vision": false,
+    "reasoning": true,
+    "roles": [
+      "general",
+      "fast",
+      "agent",
+      "coding"
+    ],
+    "defaultProfile": "chat",
+    "supportedProfiles": [
+      "chat",
+      "coding",
+      "reasoning",
+      "agent",
+      "low-memory",
+      "cpu-only"
+    ],
+    "capabilities": {
+      "reasoning": true,
+      "toolCalling": true,
+      "coding": true,
+      "vision": false,
+      "uncensored": true,
+      "streaming": true,
+      "embeddings": false
+    },
+    "runtimeHints": {
+      "layers": 28,
+      "fullAttentionLayers": 7,
+      "kvHeads": 2,
+      "headDim": 256,
+      "kvCacheBytesPerTokenF16": 14336
+    },
+    "defaultTemperature": 1.0,
+    "defaultTopP": 0.95,
+    "defaultTopK": -1,
+    "defaultMinP": 0.0,
+    "defaultRepeatPenalty": 1.0,
+    "defaultPresencePenalty": 0.0,
+    "source": {
+      "provider": "huggingface",
+      "repository": "darioooooo0o/Spark-X2.5-1.7B-Abliterated-GGUF",
+      "revision": null,
+      "filename": "Spark-X2.5-1.7B-Abliterated-Q4_K_M.gguf",
+      "license": null
+    }
+  },
+  {
+    "id": "qwen3-5-2b-claude-4-6-heretic-i1",
+    "displayName": "Qwen3.5 2B Claude 4.6 HERETIC i1",
+    "path": "mradermacher\\Qwen3.5-2B-Claude-4.6-OS-Auto-Variable-HERETIC-UNCENSORED-THINKING-i1-GGUF\\Qwen3.5-2B-Claude-4.6-OS-Auto-Variable-HERETIC-UNCENSORED-THINKING.i1-Q5_K_S.gguf",
+    "mmprojPath": null,
+    "family": "Qwen3.5",
+    "architecture": "qwen3_5",
+    "parametersB": 2.0,
+    "quantization": "i1-Q5_K_S",
+    "contextLimit": 262144,
+    "recommendedContext": 16384,
+    "vision": false,
+    "reasoning": true,
+    "roles": [
+      "general",
+      "reasoning",
+      "coding",
+      "agent"
+    ],
+    "defaultProfile": "reasoning",
+    "supportedProfiles": [
+      "chat",
+      "coding",
+      "reasoning",
+      "agent",
+      "low-memory",
+      "cpu-only"
+    ],
+    "capabilities": {
+      "reasoning": true,
+      "toolCalling": true,
+      "coding": true,
+      "vision": false,
+      "uncensored": true,
+      "streaming": true,
+      "embeddings": false
+    },
+    "runtimeHints": {
+      "layers": 24,
+      "fullAttentionLayers": 6,
+      "kvHeads": 2,
+      "headDim": 256,
+      "kvCacheBytesPerTokenF16": 12288
+    },
+    "defaultTemperature": 0.6,
+    "defaultTopP": 0.95,
+    "defaultTopK": 20,
+    "defaultMinP": 0.0,
+    "defaultRepeatPenalty": 1.05,
+    "defaultPresencePenalty": 0.0,
+    "source": {
+      "provider": "huggingface",
+      "repository": "mradermacher/Qwen3.5-2B-Claude-4.6-OS-Auto-Variable-HERETIC-UNCENSORED-THINKING-i1-GGUF",
+      "revision": null,
+      "filename": "Qwen3.5-2B-Claude-4.6-OS-Auto-Variable-HERETIC-UNCENSORED-THINKING.i1-Q5_K_S.gguf",
+      "license": null
+    }
+  },
+  {
+    "id": "qwen2-5-coder-1-5b-instruct",
+    "displayName": "Qwen2.5 Coder 1.5B Instruct",
+    "path": "Qwen\\Qwen2.5-Coder-1.5B-Instruct-GGUF\\qwen2.5-coder-1.5b-instruct-q6_k.gguf",
+    "mmprojPath": null,
+    "family": "Qwen2.5 Coder",
+    "architecture": "qwen2",
+    "parametersB": 1.5,
+    "quantization": "Q6_K",
+    "contextLimit": 32768,
+    "recommendedContext": 16384,
+    "vision": false,
+    "reasoning": false,
+    "roles": [
+      "coding",
+      "fast"
+    ],
+    "defaultProfile": "coding",
+    "supportedProfiles": [
+      "coding",
+      "chat",
+      "low-memory",
+      "cpu-only"
+    ],
+    "capabilities": {
+      "reasoning": false,
+      "toolCalling": false,
+      "coding": true,
+      "vision": false,
+      "uncensored": false,
+      "streaming": true,
+      "embeddings": false
+    },
+    "runtimeHints": {
+      "layers": 28,
+      "fullAttentionLayers": 28,
+      "kvHeads": 2,
+      "headDim": 128,
+      "kvCacheBytesPerTokenF16": 28672
+    },
+    "defaultTemperature": 0.7,
+    "defaultTopP": 0.95,
+    "defaultTopK": 20,
+    "defaultMinP": 0.0,
+    "defaultRepeatPenalty": 1.05,
+    "defaultPresencePenalty": 0.0,
+    "source": {
+      "provider": "huggingface",
+      "repository": "Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF",
+      "revision": null,
+      "filename": "qwen2.5-coder-1.5b-instruct-q6_k.gguf",
+      "license": "apache-2.0"
+    }
+  }
+]

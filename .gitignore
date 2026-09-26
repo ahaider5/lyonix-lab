@@ -1,0 +1,13 @@
+last-launch-command.txt
+launcher.user.ini
+models/
+*.log
+
+# Rust build output
+core/target/
+
+# Rust local lockfile for non-published application workspaces may be committed
+# once CI/build tooling is introduced; keep generated artifacts out.
+app/node_modules/
+app/dist/
+app/src-tauri/target/

@@ -1,0 +1,12 @@
+[launcher]
+llamaServer=llama-server
+host=127.0.0.1
+port=8081
+modelsRoot=models
+lastModel=spark-x2-5-1-7b-abliterated
+lastProfile=chat
+preventDuplicate=true
+stopExisting=false
+startMinimized=true
+customArgs=
+exportCommandPath=last-launch-command.txt

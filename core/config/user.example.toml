@@ -1,0 +1,9 @@
+version = 1
+model_roots = []
+selected_model_id = "spark-x2-5-1-7b-abliterated"
+selected_profile_id = "chat"
+llama_server_path = ""
+
+[network]
+host = "127.0.0.1"
+port = 8081

@@ -1,0 +1,7 @@
+; Copy this file to launcher.user.ini and edit modelsRoot for your machine.
+; launcher.user.ini is intentionally gitignored.
+[launcher]
+modelsRoot=C:\path\to\your\model\library
+lastModel=spark-x2-5-1-7b-abliterated
+lastProfile=chat
+customArgs=
