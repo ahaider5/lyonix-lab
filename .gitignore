@@ -5,6 +5,7 @@ models/
 
 # Rust build output
 core/target/
+cli/target/
 
 # Rust local lockfile for non-published application workspaces may be committed
 # once CI/build tooling is introduced; keep generated artifacts out.
