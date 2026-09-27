@@ -5,7 +5,9 @@ pub enum Command {
     Recommend {
         profile: Option<String>,
     },
-    Start,
+    Start {
+        profile: Option<String>,
+    },
     Status,
     Chat,
     Stop,
@@ -24,22 +26,30 @@ pub fn parse(args: &[String]) -> Command {
             "doctor" => Command::Doctor,
             "models" => Command::Models,
             "recommend" => Command::Recommend { profile: None },
-            "start" => Command::Start,
+            "start" => Command::Start { profile: None },
             "status" => Command::Status,
             "chat" => Command::Chat,
             "stop" => Command::Stop,
             "run" => Command::Run,
             _ => Command::Unknown,
         },
-        [arg, name] if arg == "recommend" => {
-            let lowered = name.to_lowercase();
-            match lowered.as_str() {
-                "chat" | "coding" | "reasoning" | "vision" | "agent" | "longcontext" => {
-                    Command::Recommend { profile: Some(lowered) }
-                }
-                _ => Command::Unknown,
-            }
-        }
+        [arg, name] if arg == "recommend" || arg == "start" => profile_command(arg, name),
+        _ => Command::Unknown,
+    }
+}
+
+fn profile_command(command: &str, name: &str) -> Command {
+    let lowered = name.to_lowercase();
+    let profile = match lowered.as_str() {
+        "chat" | "coding" | "reasoning" | "vision" | "agent" | "longcontext" => Some(lowered),
+        _ => None,
+    };
+    let Some(profile) = profile else {
+        return Command::Unknown;
+    };
+    match command {
+        "recommend" => Command::Recommend { profile: Some(profile) },
+        "start" => Command::Start { profile: Some(profile) },
         _ => Command::Unknown,
     }
 }
@@ -77,7 +87,7 @@ mod tests {
             parse(&args(&["recommend"])),
             Command::Recommend { profile: None }
         );
-        assert_eq!(parse(&args(&["start"])), Command::Start);
+        assert_eq!(parse(&args(&["start"])), Command::Start { profile: None });
         assert_eq!(parse(&args(&["status"])), Command::Status);
         assert_eq!(parse(&args(&["chat"])), Command::Chat);
         assert_eq!(parse(&args(&["stop"])), Command::Stop);
@@ -140,6 +150,44 @@ mod tests {
     fn recommend_invalid_profile_is_unknown() {
         assert_eq!(parse(&args(&["recommend", "frobnicate"])), Command::Unknown);
         assert_eq!(parse(&args(&["recommend", "--json"])), Command::Unknown);
+    }
+
+    #[test]
+    fn start_without_profile_parses() {
+        assert_eq!(parse(&args(&["start"])), Command::Start { profile: None });
+    }
+
+    #[test]
+    fn start_with_profile_parses() {
+        for name in ["chat", "coding", "reasoning", "vision", "agent", "longcontext"] {
+            assert_eq!(
+                parse(&args(&["start", name])),
+                Command::Start { profile: Some(name.to_string()) },
+                "expected Start for `start {name}`"
+            );
+        }
+    }
+
+    #[test]
+    fn start_profile_is_case_insensitive() {
+        assert_eq!(
+            parse(&args(&["start", "CHAT"])),
+            Command::Start { profile: Some("chat".to_string()) }
+        );
+        assert_eq!(
+            parse(&args(&["start", "Coding"])),
+            Command::Start { profile: Some("coding".to_string()) }
+        );
+        assert_eq!(
+            parse(&args(&["start", "LongContext"])),
+            Command::Start { profile: Some("longcontext".to_string()) }
+        );
+    }
+
+    #[test]
+    fn start_invalid_profile_is_unknown() {
+        assert_eq!(parse(&args(&["start", "frobnicate"])), Command::Unknown);
+        assert_eq!(parse(&args(&["start", "--json"])), Command::Unknown);
     }
 
     #[test]

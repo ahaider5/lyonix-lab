@@ -40,6 +40,9 @@ fn main() -> ExitCode {
         Command::Doctor => doctor(),
         Command::Models => models(),
         Command::Recommend { profile } => recommend(profile.as_deref()),
+        Command::Start { profile } => start_runtime(profile.as_deref()),
+        Command::Status => status(),
+        Command::Stop => stop(),
         _ => {
             eprintln!("{USAGE}");
             ExitCode::from(2)
@@ -105,6 +108,92 @@ fn recommend(profile_name: Option<&str>) -> ExitCode {
     };
     let recommendation = lab.recommend(&profile);
     match serde_json::to_string_pretty(&recommendation) {
+        Ok(json) => {
+            println!("{json}");
+            ExitCode::SUCCESS
+        }
+        Err(error) => print_error(error),
+    }
+}
+
+#[derive(serde::Serialize)]
+struct StartOutput {
+    pid: u32,
+    endpoint: String,
+    model_id: String,
+    artifact_id: String,
+}
+
+#[derive(serde::Serialize)]
+struct StopOutput {
+    stopped: bool,
+}
+
+fn start_runtime(profile_name: Option<&str>) -> ExitCode {
+    let profile = task_profile(profile_name);
+    let lab = match LyonixLab::open(&find_repo_root()) {
+        Ok(lab) => lab,
+        Err(error) => return print_error(error),
+    };
+    let recommendation = lab.recommend(&profile);
+    let Some(model) = recommendation.recommended_model.as_ref() else {
+        return print_error(WorkflowError::Message(
+            "no feasible model artifact was found".into(),
+        ));
+    };
+    let Some(config) = recommendation.configuration else {
+        return print_error(WorkflowError::Message(
+            "recommendation produced no runtime configuration".into(),
+        ));
+    };
+    let model_id = model.id.0.clone();
+    let started = match lab.start(&model_id, &config, std::time::Duration::from_secs(240)) {
+        Ok(started) => started,
+        Err(error) => return print_error(error),
+    };
+    let output = StartOutput {
+        pid: started.managed.handle.pid,
+        endpoint: started.plan.endpoint,
+        model_id: started.plan.model_id,
+        artifact_id: started.plan.artifact_id,
+    };
+    match serde_json::to_string_pretty(&output) {
+        Ok(json) => {
+            println!("{json}");
+            ExitCode::SUCCESS
+        }
+        Err(error) => print_error(error),
+    }
+}
+
+fn status() -> ExitCode {
+    let lab = match LyonixLab::open(&find_repo_root()) {
+        Ok(lab) => lab,
+        Err(error) => return print_error(error),
+    };
+    let status = match lab.status() {
+        Ok(status) => status,
+        Err(error) => return print_error(error),
+    };
+    match serde_json::to_string_pretty(&status) {
+        Ok(json) => {
+            println!("{json}");
+            ExitCode::SUCCESS
+        }
+        Err(error) => print_error(error),
+    }
+}
+
+fn stop() -> ExitCode {
+    let lab = match LyonixLab::open(&find_repo_root()) {
+        Ok(lab) => lab,
+        Err(error) => return print_error(error),
+    };
+    let stopped = match lab.stop() {
+        Ok(()) => StopOutput { stopped: true },
+        Err(error) => return print_error(error),
+    };
+    match serde_json::to_string_pretty(&stopped) {
         Ok(json) => {
             println!("{json}");
             ExitCode::SUCCESS
