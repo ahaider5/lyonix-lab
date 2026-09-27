@@ -1,8 +1,10 @@
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Command {
     Doctor,
     Models,
-    Recommend,
+    Recommend {
+        profile: Option<String>,
+    },
     Start,
     Status,
     Chat,
@@ -21,7 +23,7 @@ pub fn parse(args: &[String]) -> Command {
             "--version" | "version" => Command::Version,
             "doctor" => Command::Doctor,
             "models" => Command::Models,
-            "recommend" => Command::Recommend,
+            "recommend" => Command::Recommend { profile: None },
             "start" => Command::Start,
             "status" => Command::Status,
             "chat" => Command::Chat,
@@ -29,6 +31,15 @@ pub fn parse(args: &[String]) -> Command {
             "run" => Command::Run,
             _ => Command::Unknown,
         },
+        [arg, name] if arg == "recommend" => {
+            let lowered = name.to_lowercase();
+            match lowered.as_str() {
+                "chat" | "coding" | "reasoning" | "vision" | "agent" | "longcontext" => {
+                    Command::Recommend { profile: Some(lowered) }
+                }
+                _ => Command::Unknown,
+            }
+        }
         _ => Command::Unknown,
     }
 }
@@ -62,12 +73,73 @@ mod tests {
     fn parses_recognized_commands() {
         assert_eq!(parse(&args(&["doctor"])), Command::Doctor);
         assert_eq!(parse(&args(&["models"])), Command::Models);
-        assert_eq!(parse(&args(&["recommend"])), Command::Recommend);
+        assert_eq!(
+            parse(&args(&["recommend"])),
+            Command::Recommend { profile: None }
+        );
         assert_eq!(parse(&args(&["start"])), Command::Start);
         assert_eq!(parse(&args(&["status"])), Command::Status);
         assert_eq!(parse(&args(&["chat"])), Command::Chat);
         assert_eq!(parse(&args(&["stop"])), Command::Stop);
         assert_eq!(parse(&args(&["run"])), Command::Run);
+    }
+
+    #[test]
+    fn recommend_without_profile_parses() {
+        assert_eq!(
+            parse(&args(&["recommend"])),
+            Command::Recommend { profile: None }
+        );
+    }
+
+    #[test]
+    fn recommend_with_profile_parses() {
+        assert_eq!(
+            parse(&args(&["recommend", "chat"])),
+            Command::Recommend { profile: Some("chat".to_string()) }
+        );
+        assert_eq!(
+            parse(&args(&["recommend", "coding"])),
+            Command::Recommend { profile: Some("coding".to_string()) }
+        );
+        assert_eq!(
+            parse(&args(&["recommend", "reasoning"])),
+            Command::Recommend { profile: Some("reasoning".to_string()) }
+        );
+        assert_eq!(
+            parse(&args(&["recommend", "vision"])),
+            Command::Recommend { profile: Some("vision".to_string()) }
+        );
+        assert_eq!(
+            parse(&args(&["recommend", "agent"])),
+            Command::Recommend { profile: Some("agent".to_string()) }
+        );
+        assert_eq!(
+            parse(&args(&["recommend", "longcontext"])),
+            Command::Recommend { profile: Some("longcontext".to_string()) }
+        );
+    }
+
+    #[test]
+    fn recommend_profile_is_case_insensitive() {
+        assert_eq!(
+            parse(&args(&["recommend", "Coding"])),
+            Command::Recommend { profile: Some("coding".to_string()) }
+        );
+        assert_eq!(
+            parse(&args(&["recommend", "LongContext"])),
+            Command::Recommend { profile: Some("longcontext".to_string()) }
+        );
+        assert_eq!(
+            parse(&args(&["recommend", "REASONING"])),
+            Command::Recommend { profile: Some("reasoning".to_string()) }
+        );
+    }
+
+    #[test]
+    fn recommend_invalid_profile_is_unknown() {
+        assert_eq!(parse(&args(&["recommend", "frobnicate"])), Command::Unknown);
+        assert_eq!(parse(&args(&["recommend", "--json"])), Command::Unknown);
     }
 
     #[test]
@@ -83,5 +155,16 @@ mod tests {
     #[test]
     fn extra_args_are_unknown() {
         assert_eq!(parse(&args(&["doctor", "--json"])), Command::Unknown);
+        for command in ["doctor", "models", "start", "status", "chat", "stop", "run"] {
+            assert_eq!(
+                parse(&args(&[command, "extra"])),
+                Command::Unknown,
+                "expected Unknown for `{command} extra`"
+            );
+        }
+        assert_eq!(
+            parse(&args(&["recommend", "coding", "extra"])),
+            Command::Unknown
+        );
     }
 }

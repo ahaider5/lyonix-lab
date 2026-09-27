@@ -101,6 +101,7 @@ name = "lyonix"
 version = "0.1.0"
 dependencies = [
  "lyonix-core",
+ "serde",
  "serde_json",
 ]
 
