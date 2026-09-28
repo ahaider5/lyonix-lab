@@ -63,7 +63,7 @@ The Rust core (`core/`) is the architecture baseline: layered, typed, clippy-cle
 
 ```text
 git clone <repository>
-cd lyonix_latest_updated/core
+cd lyonix-lab/core
 cargo check
 cargo test
 ```
