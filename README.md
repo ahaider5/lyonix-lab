@@ -15,7 +15,7 @@ LYONIX-LAB is in active development. The headless Rust core is the validated arc
 
 ## Current capabilities
 
-**Implemented and validated** (25 tests pass; `cargo check`, `cargo check --all-targets`, `clippy -D warnings` clean; real-machine lifecycle and streaming validated on Windows / i5-10210U / GeForce MX250):
+**Implemented and validated** (25 core tests + 19 CLI tests pass; `cargo check`, `cargo check --all-targets`, `clippy -D warnings` clean; real-machine lifecycle, streaming, and CLI validation on Windows / i5-10210U / GeForce MX250):
 
 - Hardware detection: CPU/RAM, GPU adapters and VRAM, llama.cpp device discovery (`--list-devices`), derived hardware tiers.
 - Model catalog and discovery: three-model catalog (`models.json`), configurable model roots (user config, path-safety enforced), `ModelDefinition` / `ModelArtifact` / `InstalledModel` separation, explicit `ModelResolver`.
@@ -27,7 +27,6 @@ LYONIX-LAB is in active development. The headless Rust core is the validated arc
 
 ## Current limitations
 
-- **No CLI yet** — the application boundary is ready; the command parser is not built.
 - **Tauri desktop shell exists but is not the current core milestone** — it was checked structurally in an earlier milestone, has not been validated against the current core on this machine, and does not yet consume the `LyonixLab` facade.
 - Single runtime (llama.cpp only). Ollama, LM Studio, MLX, vLLM are explicitly deferred.
 - No model downloading or managed runtime distribution — you must already have the GGUF files.
@@ -43,7 +42,7 @@ LYONIX-LAB is in active development. The headless Rust core is the validated arc
 Phase-by-phase status, objectives, and exit criteria live in `docs/ROADMAP.md` (no dates or estimates). Summary:
 
 - **Phases C–F (complete):** headless core — domain/catalog/hardware/recommendation, runtime lifecycle (adapter, supervisor, health, durable state), typed inference, application-service boundary.
-- **Phase G (planned):** CLI over the `LyonixLab` workflows.
+- **Phase G (complete):** CLI over the `LyonixLab` workflows — `lyonix doctor/models/recommend/start/status/chat/stop/run`, cross-invocation lifecycle via durable runtime state.
 - **Phase H (partially implemented):** Tauri desktop UI as an application-service consumer.
 - **Deferred:** additional runtimes, model downloads, SQLite, benchmarks, packaging/updater.
 

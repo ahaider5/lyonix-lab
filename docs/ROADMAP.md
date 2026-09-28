@@ -66,11 +66,15 @@ No dates or estimates are attached to any phase. Status reflects the repository 
 
 ## Phase G — CLI implementation
 
-- **Status:** Planned (not started).
+- **Status:** Complete.
 - **Objective:** A real CLI binary over `LyonixLab` workflows (doctor/list/recommend/start/status/chat/stop/run), using the persisted runtime state for cross-invocation reconciliation.
-- **Implemented items:** None. The application boundary it needs exists (Phase F).
-- **Remaining work:** Argument parsing, command wiring to `LyonixLab`, exit-code mapping from typed errors, output formatting. No business logic in the CLI layer.
-- **Exit criteria:** CLI exercises every `LyonixLab` workflow; cross-invocation start/status/stop works via durable state; validation gate passes.
+- **Implemented items:**
+  - `lyonix` CLI crate (`cli/`): thin binary over the facade; hand-rolled argument parsing (no external CLI-framework dependency); exit codes 0 success / 1 operational error / 2 usage error; repository-root discovery via nearest ancestor containing `models.json`.
+  - All eight commands: `doctor` (JSON report), `models` (pretty-JSON list), `recommend [profile]` (case-insensitive profile selector, `TaskProfile` as a request parameter only), `start [profile]` (facade recommend → start, 240 s READY timeout), `status` (reconciled from durable state), `stop` (facade-only, `ProcessSupervisor::stop_by_pid` identity-verified kill), `chat <prompt...>` (blocking, plain-text output, request validated first), `run <prompt...>` (facade one-process lifecycle, cleanup-safe).
+  - 19 arg-parsing tests; no test calls `LyonixLab::open` or launches `llama-server`.
+  - Real-machine validation on the development machine (Windows, i5-10210U, MX250): full cross-invocation lifecycle (start → status Ready from a separate invocation → stop from a separate invocation, process gone, state cleared); stale-record reconciliation; live `chat` and live `run` with real model responses; `PortInUse` fail-safe; per-profile recommendations (Spark for chat, Qwen2.5 Coder for coding).
+- **Remaining work:** Optional follow-ups only (`--stream`, per-invocation sampling overrides, table formatting, `Failed`/`Crashed` reconciliation state). No business logic in the CLI layer.
+- **Exit criteria:** CLI exercises every `LyonixLab` workflow; cross-invocation start/status/stop works via durable state; validation gate passes. Satisfied.
 
 ## Phase H — Tauri desktop UI as an application-service consumer
 

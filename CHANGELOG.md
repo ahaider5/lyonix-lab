@@ -28,6 +28,31 @@ All notable changes to LYONIX-LAB are documented here. The project has no prior 
 
 ### Not in this baseline
 
-- CLI binary (application boundary ready; parser not built).
 - Tauri UI as a consumer of the application facade (shell exists from an earlier milestone; not the current core milestone).
 - Ollama / LM Studio / MLX / vLLM runtime adapters, model downloads, managed runtime distribution, SQLite persistence, benchmark execution, production packaging/signing/updater, live log streaming.
+
+## Unreleased — Phase G: CLI
+
+### Added
+
+- `lyonix` CLI crate (`cli/`): a thin binary over the `LyonixLab` application facade. Hand-rolled argument parsing (no external CLI-framework dependency); exit codes: 0 success, 1 operational error, 2 usage error. Repository root discovery walks up from the working directory to the nearest ancestor containing `models.json`.
+- `lyonix doctor` — JSON `DiagnosticReport` of hardware, runtimes, model roots, and installed-artifact count via `LyonixLab::doctor()`.
+- `lyonix models` — pretty-JSON list of installed catalog models with local paths via `LyonixLab::list_models()`.
+- `lyonix recommend [profile]` — facade recommendation with an optional task-profile selector (`chat`, `coding`, `reasoning`, `vision`, `agent`, `longcontext`; case-insensitive; `chat` default). The `TaskProfile` is constructed as a request parameter only; no scoring or thresholds live in the CLI.
+- `lyonix start [profile]` — facade `recommend` → `start` (240 s READY timeout); prints pid/endpoint/model/artifact JSON. Cross-invocation lifecycle persists durable runtime state.
+- `lyonix status` — reconciled `RuntimeStatus` from durable state plus a live health probe via `LyonixLab::status()`.
+- `lyonix stop` — stops through the facade only (`ProcessSupervisor::stop_by_pid` with PID + executable identity verification); prints `{"stopped": true}`.
+- `lyonix chat <prompt...>` — blocking chat completion via `LyonixLab::chat` (plain-text output, request validated first, 256-token CLI default, 120 s timeout).
+- `lyonix run <prompt...>` — the facade's one-process lifecycle via `LyonixLab::run` (recommend → start → READY → inference → stop, cleanup-safe).
+- CLI test suite: 19 arg-parsing tests. No test calls `LyonixLab::open` (reads real user configuration/hardware) or launches `llama-server`.
+
+### Validation
+
+- `cargo check`, `cargo test` (19/19 CLI tests; 25/25 core tests), `cargo check --all-targets`, and `cargo clippy --all-targets --all-features -- -D warnings` (zero warnings) pass for the CLI crate; `core/` untouched and green.
+- Real-machine smoke (Windows, i5-10210U, MX250): `doctor` prints the real report; `models` lists the three catalog models with real local paths; per-profile `recommend` selects expected models (Spark for chat, Qwen2.5 Coder for coding); cross-invocation `start` → `status` Ready (separate invocation, durable state) → `stop` (separate invocation, identity-verified kill, process gone, state cleared); stale-record reconciliation verified; live `chat` and live `run` return real model responses; `run` cleans up (process gone, state cleared, port closed); `PortInUse` fail-safe verified while a runtime is up; invalid/extra arguments exit 2.
+
+### Not in this phase
+
+- Streaming chat output (`--stream`), per-invocation `--max-tokens`/sampling overrides, human-readable table formatting for `doctor`/`models` (functional JSON only by design).
+- Tauri UI consumption of the application facade (Phase H).
+- Additional runtimes, model downloads, SQLite, benchmark/calibration, packaging.

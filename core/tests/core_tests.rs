@@ -229,6 +229,24 @@ fn write_fixture_tree(root: &std::path::Path, relative: &std::path::Path) -> Pat
     full
 }
 
+/// Consume any request bytes still pending on the mock socket without
+/// blocking. The first `read` in the test thread usually consumes the whole
+/// request, but a partial read leaves data in the receive buffer; closing a
+/// socket with unread receive data sends RST instead of FIN on Windows, which
+/// surfaces as os error 10054 in the client instead of the response under
+/// test. A short bounded drain keeps the mock deterministic.
+fn drain_request(stream: &mut std::net::TcpStream, buf: &mut [u8; 4096]) {
+    use std::io::Read;
+    let _ = stream.set_read_timeout(Some(std::time::Duration::from_millis(50)));
+    loop {
+        match stream.read(buf) {
+            Ok(0) | Err(_) => break,
+            Ok(_) => continue,
+        }
+    }
+    let _ = stream.set_read_timeout(None);
+}
+
 #[test]
 fn configured_root_discovers_all_three_catalog_artifacts() {
     use lyonix_core::catalog::ModelCatalog;
@@ -477,6 +495,7 @@ fn inference_mock_http_success_and_error_response() {
         let (mut stream, _) = listener.accept().unwrap();
         let mut buf = [0_u8; 4096];
         let _ = stream.read(&mut buf);
+        drain_request(&mut stream, &mut buf);
         let body = serde_json::json!({
             "model": "spark-test",
             "choices": [{ "message": { "role": "assistant", "content": "ok: 42" }, "finish_reason": "stop" }],
@@ -508,6 +527,7 @@ fn inference_mock_http_success_and_error_response() {
         let (mut stream, _) = listener.accept().unwrap();
         let mut buf = [0_u8; 4096];
         let _ = stream.read(&mut buf);
+        drain_request(&mut stream, &mut buf);
         let body = r#"{"error":{"message":"model is not loaded"}}"#;
         let response = format!(
             "HTTP/1.1 503 Service Unavailable\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
@@ -544,6 +564,7 @@ fn inference_mock_http_streaming_events() {
         let (mut stream, _) = listener.accept().unwrap();
         let mut buf = [0_u8; 4096];
         let _ = stream.read(&mut buf);
+        drain_request(&mut stream, &mut buf);
         let chunk = |payload: &str| format!("{:x}\r\n{}\r\n", payload.len(), payload);
         let mut body = String::new();
         body.push_str(&chunk("data: {\"choices\":[{\"delta\":{\"content\":\"Hel\"}}]}\n\n"));
