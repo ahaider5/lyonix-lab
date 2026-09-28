@@ -9,9 +9,13 @@ pub enum Command {
         profile: Option<String>,
     },
     Status,
-    Chat,
+    Chat {
+        prompt: Option<String>,
+    },
     Stop,
-    Run,
+    Run {
+        prompt: Option<String>,
+    },
     Help,
     Version,
     Unknown,
@@ -28,12 +32,22 @@ pub fn parse(args: &[String]) -> Command {
             "recommend" => Command::Recommend { profile: None },
             "start" => Command::Start { profile: None },
             "status" => Command::Status,
-            "chat" => Command::Chat,
+            "chat" => Command::Chat { prompt: None },
             "stop" => Command::Stop,
-            "run" => Command::Run,
+            "run" => Command::Unknown,
             _ => Command::Unknown,
         },
         [arg, name] if arg == "recommend" || arg == "start" => profile_command(arg, name),
+        [arg, tail @ ..] if arg == "chat" && !tail.is_empty() => {
+            Command::Chat {
+                prompt: Some(tail.join(" ")),
+            }
+        }
+        [arg, tail @ ..] if arg == "run" && !tail.is_empty() => {
+            Command::Run {
+                prompt: Some(tail.join(" ")),
+            }
+        }
         _ => Command::Unknown,
     }
 }
@@ -89,9 +103,8 @@ mod tests {
         );
         assert_eq!(parse(&args(&["start"])), Command::Start { profile: None });
         assert_eq!(parse(&args(&["status"])), Command::Status);
-        assert_eq!(parse(&args(&["chat"])), Command::Chat);
+        assert_eq!(parse(&args(&["chat"])), Command::Chat { prompt: None });
         assert_eq!(parse(&args(&["stop"])), Command::Stop);
-        assert_eq!(parse(&args(&["run"])), Command::Run);
     }
 
     #[test]
@@ -191,6 +204,48 @@ mod tests {
     }
 
     #[test]
+    fn chat_without_prompt_parses() {
+        assert_eq!(parse(&args(&["chat"])), Command::Chat { prompt: None });
+    }
+
+    #[test]
+    fn chat_prompt_joins_with_spaces() {
+        assert_eq!(
+            parse(&args(&["chat", "hello"])),
+            Command::Chat {
+                prompt: Some("hello".to_string())
+            }
+        );
+        assert_eq!(
+            parse(&args(&["chat", "hello", "world"])),
+            Command::Chat {
+                prompt: Some("hello world".to_string())
+            }
+        );
+    }
+
+    #[test]
+    fn run_prompt_joins_with_spaces() {
+        assert_eq!(
+            parse(&args(&["run", "hello"])),
+            Command::Run {
+                prompt: Some("hello".to_string())
+            }
+        );
+        assert_eq!(
+            parse(&args(&["run", "hello", "world"])),
+            Command::Run {
+                prompt: Some("hello world".to_string())
+            }
+        );
+    }
+
+    #[test]
+    fn run_without_prompt_is_unknown() {
+        assert_eq!(parse(&args(&["run"])), Command::Unknown);
+    }
+
+    #[test]
     fn unknown_command_is_unknown() {
         assert_eq!(parse(&args(&["frobnicate"])), Command::Unknown);
     }
@@ -203,7 +258,7 @@ mod tests {
     #[test]
     fn extra_args_are_unknown() {
         assert_eq!(parse(&args(&["doctor", "--json"])), Command::Unknown);
-        for command in ["doctor", "models", "start", "status", "chat", "stop", "run"] {
+        for command in ["doctor", "models", "start", "status", "stop"] {
             assert_eq!(
                 parse(&args(&[command, "extra"])),
                 Command::Unknown,

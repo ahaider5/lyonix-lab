@@ -2,7 +2,7 @@ mod args;
 
 use args::{Command, parse};
 use lyonix_core::application::service::{DoctorReport, LyonixLab, WorkflowError};
-use lyonix_core::domain::{ReasoningMode, TaskKind, TaskProfile};
+use lyonix_core::domain::{ChatMessage, ChatRequest, ReasoningMode, TaskKind, TaskProfile};
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
@@ -26,6 +26,8 @@ Options:
   --version   Print the CLI version
 ";
 
+const DEFAULT_MAX_TOKENS: u32 = 256;
+
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
     match parse(&args) {
@@ -43,6 +45,8 @@ fn main() -> ExitCode {
         Command::Start { profile } => start_runtime(profile.as_deref()),
         Command::Status => status(),
         Command::Stop => stop(),
+        Command::Chat { prompt } => chat(prompt),
+        Command::Run { prompt } => run_command(prompt),
         _ => {
             eprintln!("{USAGE}");
             ExitCode::from(2)
@@ -200,6 +204,67 @@ fn stop() -> ExitCode {
         }
         Err(error) => print_error(error),
     }
+}
+
+/// ChatRequest request parameter for the facade's chat workflow.
+/// Values are the CLI's request inputs only; no transport details here.
+fn chat_request(prompt: &str) -> ChatRequest {
+    ChatRequest {
+        model: None,
+        messages: vec![ChatMessage {
+            role: "user".into(),
+            content: prompt.to_string(),
+        }],
+        temperature: None,
+        top_p: None,
+        top_k: None,
+        max_tokens: Some(DEFAULT_MAX_TOKENS),
+        stream: false,
+    }
+}
+
+fn chat(prompt: Option<String>) -> ExitCode {
+    let Some(prompt) = prompt else {
+        eprintln!("{USAGE}");
+        return ExitCode::from(2);
+    };
+    let request = chat_request(&prompt);
+    if let Err(error) = request.validate() {
+        return print_error(error);
+    }
+    let lab = match LyonixLab::open(&find_repo_root()) {
+        Ok(lab) => lab,
+        Err(error) => return print_error(error),
+    };
+    let response = match lab.chat(&request, std::time::Duration::from_secs(120)) {
+        Ok(response) => response,
+        Err(error) => return print_error(error),
+    };
+    println!("{}", response.content);
+    ExitCode::SUCCESS
+}
+
+fn run_command(prompt: Option<String>) -> ExitCode {
+    let Some(prompt) = prompt else {
+        eprintln!("{USAGE}");
+        return ExitCode::from(2);
+    };
+    let profile = task_profile(None);
+    let lab = match LyonixLab::open(&find_repo_root()) {
+        Ok(lab) => lab,
+        Err(error) => return print_error(error),
+    };
+    let response = match lab.run(
+        &profile,
+        &prompt,
+        DEFAULT_MAX_TOKENS,
+        std::time::Duration::from_secs(120),
+    ) {
+        Ok(response) => response,
+        Err(error) => return print_error(error),
+    };
+    println!("{}", response.content);
+    ExitCode::SUCCESS
 }
 
 /// TaskProfile request parameter for the facade's recommendation workflow.
